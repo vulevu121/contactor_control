@@ -190,6 +190,6 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">BECM Contacter Control</p></body></html>"))
         self.openContactorBtn.setText(_translate("MainWindow", "Open"))
         self.closeContactorBtn.setText(_translate("MainWindow", "Close"))
-        self.Intruction.setText(_translate("MainWindow", "<html><head/><body><p>Toggle Flashing switch to ON before START</p><p>Toogle Flashing switch to OFF after STOP</p></body></html>"))
+        self.Intruction.setText(_translate("MainWindow", "<html><head/><body><p>Toggle Flashing switch to ON before START</p><p>Toogle Flashing switch to OFF before STOP</p></body></html>"))
 
 import rdm_graphics_rc
