@@ -31,7 +31,7 @@ class BECM:
         self.Counter        = 0x0     # bit 0,1 of byte 0. min: 0, max:3 
         self.DCContactorCmd = 0x0     # bit 7 of byte 1
         self.BECM_NM        = 0x0     # bit 6,5 of byte 1
-
+        self.TB_Status      = "None"
         
 #################################   BECM methods ########################################################
     def update_CAN_msg(self):
@@ -47,6 +47,9 @@ class BECM:
         # add CAN message to list
         self.msg_list = []
         self.msg_list = [self.ContactorCmdMsg]
+
+    def read_tb_status(self,bus):
+        pass
         
     def restrictedOpen(self):
         self.ContactorCmd = 0x1
@@ -65,6 +68,24 @@ class BECM:
             time.sleep(0.025)
             if time.time() - startTime > 1:
                 break
+
+    def decode_tb_status(self,status):                                     # Pass status signal in as argument
+        status2str = {0x0: 'NO FAULT',
+                      0x1: 'WARNING',
+                      0x2: 'CHARGER DISABLED',
+                      0x3: 'LIMP HOME HIGH',
+                      0x4: 'LIMP HOME LOW',
+                      0x5: 'LIMP HOME LOW NO RESTART',
+                      0x6: 'EPO REQUEST',
+                      0x7: 'SOFT EPO',
+                      0x8: 'HARD EPO',
+                      }
+        
+        try:
+            return status2str[status]
+        except:
+            return 'Not Available'
+            
 
 #################################   BECM methods END ########################################################
 
