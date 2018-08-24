@@ -8,6 +8,7 @@ import threading
 import re
 
 TransmitFlag = False
+ReadFlag = False
 bus = None
 cycle_time = 0.01
 
@@ -23,8 +24,11 @@ class ExampleApp(QMainWindow, Ui_MainWindow):
         self.becm = BECM()
 
         # Event handlers
-        self.startBtn.clicked.connect(lambda: self.start_CAN_thread())
-        self.stopBtn.clicked.connect(lambda: self.stop_transmit())
+        #self.startBtn.clicked.connect(lambda: self.start_CAN_thread())
+        #self.stopBtn.clicked.connect(lambda: self.stop_transmit())
+        
+        self.startStopBtn.clicked.connect(lambda: self.start_CAN_thread())
+        
         self.openContactorBtn.clicked.connect(lambda: self.openContactor())
         self.closeContactorBtn.clicked.connect(lambda: self.closeContactor())
 
@@ -36,12 +40,22 @@ class ExampleApp(QMainWindow, Ui_MainWindow):
         print("Close Contactor...")
         self.becm.restrictedClose()
 
+    def start_read(self):
+        print("Reading BECM status...")
+        global ReadFlag
+        global bus
+
+        while(ReadFlag):
+            self.becm.readStatus(bus)
+            self.tbStatusBox.setText(self.becm.TB_Status)
+            self.HVCurrentBox.setText(str(self.becm.HV_Current))
+            
+            
     def start_transmit(self):
-        print("Start CAN transmit...")
+        print("Start CAN transmit...\n")
         global TransmitFlag
         global bus
-        global EnableFlag 
-       
+              
         # Send CAN continously
         while(TransmitFlag):
             self.becm.update_CAN_msg()
@@ -53,11 +67,18 @@ class ExampleApp(QMainWindow, Ui_MainWindow):
     def stop_transmit(self):
         global TransmitFlag
         global EnableFlag
-        
+        global ReadFlag
+
+
+        # change SSB text to START
+        self.startStopBtn.clicked.disconnect()
+        self.startStopBtn.clicked.connect(lambda: self.start_CAN_thread())
+        self.startStopBtn.setText('Start')
 
         # Set this flag to stop the ongoing transmittion
-        
         TransmitFlag = False
+        # Set this flag to stop reading
+        ReadFlag = False
         # transmit 1 more second before stopping CAN
         print ("Disable BECM...")
         self.becm.disableBECM(bus)
@@ -67,12 +88,24 @@ class ExampleApp(QMainWindow, Ui_MainWindow):
         print ("Start CAN thread...")
         global TransmitFlag
         TransmitFlag = True
+
+        global ReadFlag
+        ReadFlag = True
+
+        # change SSB text to STOP
+        self.startStopBtn.clicked.disconnect()
+        self.startStopBtn.clicked.connect(lambda: self.stop_transmit())
+        self.startStopBtn.setText('Stop')
         
         # separate thread to prevent gui freezing. PASS HANDLE NOT FUNCTION CALL
-        thread = threading.Thread(target=self.start_transmit, args=())
-        thread.daemon = True
-        thread.start()        
+        send_thread = threading.Thread(target=self.start_transmit, args=())
+        send_thread.daemon = True
+        send_thread.start()        
 
+        # separate thread to prevent gui freezing. PASS HANDLE NOT FUNCTION CALL
+        read_thread = threading.Thread(target=self.start_read, args=())
+        read_thread.daemon = True
+        read_thread.start()   
 
 def numberFromString(string):
     # this return a list of number from the string

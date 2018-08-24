@@ -32,7 +32,7 @@ class BECM:
         self.DCContactorCmd = 0x0     # bit 7 of byte 1
         self.BECM_NM        = 0x0     # bit 6,5 of byte 1
         self.TB_Status      = "None"
-        
+        self.HV_Current     = 9999
 #################################   BECM methods ########################################################
     def update_CAN_msg(self):
         self.Counter = (self.Counter + 1) % 4
@@ -48,8 +48,21 @@ class BECM:
         self.msg_list = []
         self.msg_list = [self.ContactorCmdMsg]
 
-    def read_tb_status(self,bus):
-        pass
+    def readStatus(self,bus):
+        while(True):
+            startTime = time.time()
+            # assume CAN traffic always present
+            msg = bus.recv()        
+            if msg.arbitration_id == TRAC_BATT_STATUS_1_ID:
+                self.TB_Status = self.decode_tb_status((msg.data[1] >> 1) & 0xF)
+                self.HV_Current = ((msg.data[0] << 3) | (msg.data[1] >> 5)) - 1000
+                # too many message queued up
+                #print(self.TB_Status)
+                bus.flush_tx_buffer()
+                
+            if time.time() - startTime > 0.5:
+                break            
+                    
         
     def restrictedOpen(self):
         self.ContactorCmd = 0x1
