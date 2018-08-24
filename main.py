@@ -48,7 +48,8 @@ class ExampleApp(QMainWindow, Ui_MainWindow):
         while(ReadFlag):
             self.becm.readStatus(bus)
             self.tbStatusBox.setText(self.becm.TB_Status)
-            self.HVCurrentBox.setText(str(self.becm.HV_Current))
+            self.HVCurrentBox.setText('{} A'.format(self.becm.HV_Current))
+            self.MaxCellTempBox.setText('{} C'.format(self.becm.MaxCellTemp))
             
             
     def start_transmit(self):
@@ -121,6 +122,7 @@ def initCAN():
     can.rc['bitrate'] = 500000
     can.rc['channel'] = 'can0'
     bus = Bus()
+    #listener = Listener()
     bus.flush_tx_buffer()
 	
 def main():

@@ -15,7 +15,7 @@ import numpy as np
 ######## CAN ID ################
 TRAC_BATT_COMMAND_ID = 0x230
 TRAC_BATT_STATUS_1_ID = 0x235
-
+TRAC_BATT_STATUS_2_ID = 0x237
 ####### Miscellaneous #######
 bus = None
 
@@ -33,6 +33,8 @@ class BECM:
         self.BECM_NM        = 0x0     # bit 6,5 of byte 1
         self.TB_Status      = "None"
         self.HV_Current     = 9999
+        self.MaxCellVoltage = 9999
+        self.MaxCellTemp = 9999
 #################################   BECM methods ########################################################
     def update_CAN_msg(self):
         self.Counter = (self.Counter + 1) % 4
@@ -49,20 +51,24 @@ class BECM:
         self.msg_list = [self.ContactorCmdMsg]
 
     def readStatus(self,bus):
+        startTime = time.time()
         while(True):
-            startTime = time.time()
             # assume CAN traffic always present
             msg = bus.recv()        
             if msg.arbitration_id == TRAC_BATT_STATUS_1_ID:
                 self.TB_Status = self.decode_tb_status((msg.data[1] >> 1) & 0xF)
                 self.HV_Current = ((msg.data[0] << 3) | (msg.data[1] >> 5)) - 1000
-                # too many message queued up
-                #print(self.TB_Status)
-                bus.flush_tx_buffer()
                 
-            if time.time() - startTime > 0.5:
+            if msg.arbitration_id == TRAC_BATT_STATUS_2_ID:
+                self.MaxCellVoltage = ((msg.data[0] << 1) | (msg.data[1] >> 7)) * 10
+                self.MaxCellTemp = (msg.data[1] & 0x7F ) - 40
+                
+            # print(self.TB_Status)
+            bus.flush_tx_buffer()
+               
+            if time.time() - startTime > 0.1:
                 break            
-                    
+               
         
     def restrictedOpen(self):
         self.ContactorCmd = 0x1
